@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import tempfile
 import sys
+from typing import Any, Dict
 
 # Streamlit Cloud 배포 시 Secrets를 환경변수로 로드
 # 로컬에서는 .env가 사용되고, Cloud에서는 st.secrets가 사용됨
@@ -20,7 +21,7 @@ except ImportError:
 # Add the current directory to sys.path to ensure imports work correctly
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from contract_processor import extract_text_node, analyze_contract_node, ContractData
+from contract_processor import extract_text_node, analyze_contract_node, AgentState
 from sheets_manager import GoogleSheetManager
 
 # Page configuration
@@ -44,8 +45,11 @@ if uploaded_file is not None:
     if st.button("분석 시작"):
         with st.spinner("텍스트 추출 및 분석 중..."):
             # 1. Extract Text
-            state = {"file_path": tmp_file_path}
-            extract_result = extract_text_node(state)
+            state: Dict[str, Any] = {"file_path": tmp_file_path}
+            
+            # Create AgentState instance properly
+            agent_state = AgentState(**state)
+            extract_result = extract_text_node(agent_state)
             
             if extract_result.get("raw_text"):
                 raw_text = extract_result["raw_text"]
@@ -55,7 +59,8 @@ if uploaded_file is not None:
                 
                 # 2. Analyze Contract
                 state["raw_text"] = raw_text
-                analyze_result = analyze_contract_node(state)
+                agent_state = AgentState(**state)
+                analyze_result = analyze_contract_node(agent_state)
                 
                 if analyze_result.get("extracted_data"):
                     data = analyze_result["extracted_data"]
@@ -68,17 +73,17 @@ if uploaded_file is not None:
                     # Save to Sheets
                     if st.button("구글 시트에 저장"):
                         try:
-                            # Load environment variables if needed (assuming env.py handles it or already loaded)
-                            from env import SPREADSHEET_URL
-                            # Or use the constant from contract_processor if available, but it's better to be safe
-                            # Ideally contract_processor should expose it or we pass it.
-                            # Let's try to import it or define it. 
-                            # contract_processor.py has SPREADSHEET_URL defined.
-                            from contract_processor import SPREADSHEET_URL
-                            
-                            manager = GoogleSheetManager(SPREADSHEET_URL)
-                            manager.append_row(data)
-                            st.success("구글 시트에 저장되었습니다!")
+                            # Load SPREADSHEET_URL from environment
+                            spreadsheet_url = os.environ.get("SPREADSHEET_URL", "")
+                            if not spreadsheet_url:
+                                st.error("SPREADSHEET_URL이 설정되지 않았습니다.")
+                            else:
+                                manager = GoogleSheetManager(spreadsheet_url)
+                                if isinstance(data, dict):
+                                    manager.append_row(data)
+                                    st.success("구글 시트에 저장되었습니다!")
+                                else:
+                                    st.error("저장할 데이터 형식이 올바르지 않습니다. (dict 타입이어야 합니다)")
                         except Exception as e:
                             st.error(f"저장 실패: {e}")
                 else:
@@ -86,6 +91,5 @@ if uploaded_file is not None:
             else:
                 st.error(f"텍스트 추출 실패: {extract_result.get('status')}")
 
-    # Cleanup: The temp file persists. In a real app, we might want to clean it up.
-    # For now, we leave it or clean it up if we want.
-    # os.unlink(tmp_file_path) 
+    # Cleanup temporary file
+    # os.unlink(tmp_file_path)

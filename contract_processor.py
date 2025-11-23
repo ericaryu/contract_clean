@@ -1,7 +1,7 @@
 import sys
 import os
-import tkinter as tk
-from tkinter import filedialog
+# import tkinter as tk
+# from tkinter import filedialog
 from typing import Optional
 from typing_extensions import TypedDict
 

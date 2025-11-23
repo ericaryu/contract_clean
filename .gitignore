@@ -1,5 +1,43 @@
+# Environment variables
 .env
 env.py
+
+# Virtual Environment
 .venv/
+venv/
+env/
+ENV/
+
+# Python cache
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Credentials
 service_account.json
+*.json  # 만약 모든 JSON을 제외하고 싶다면 (주의: package.json 등도 제외됨)
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp
+tmp/
+temp/
+
+# Uploads (사용자가 업로드한 파일들)
+uploads/*
+!uploads/.gitkeep  # uploads 폴더는 유지하되 내용물은 제외
+
+# PyCache in subfolders
+contract_clean/__pycache__/
