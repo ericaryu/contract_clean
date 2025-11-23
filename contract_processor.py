@@ -13,20 +13,24 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel
 from langgraph.graph import StateGraph, START, END
 
-# ❌ 이 부분 삭제 - 사용하지 않음
-# try:
-#     from .sheets_manager import GoogleSheetManager
-# except ImportError:
-#     from sheets_manager import GoogleSheetManager
+# ❌ 이 부분 삭제 - streamlit_app.py에서 이미 처리함
+# OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+# if OPENAI_API_KEY:
+#     os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
-# --- 설정 상수 ---
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1p82-rmbcGuQ4asd15teiSsBn4J41x0rOpIDVQSrPEIU/"
-
-# --- 환경 변수 세팅 ---
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-if OPENAI_API_KEY:
-    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-
+# --- 1. 데이터 구조 정의 ---
+class ContractData(BaseModel):
+    contract_name: str
+    user_name: str
+    contract_period: str
+    claim_dates: str
+    payment_ratios: str
+    contract_sign_date: str
+    company_name: str  # 상호
+    company_address: str  # 주소
+    business_registration_number: str  # 사업자등록번호
+    ceo_name: str  # 대표이사
+    contact: str  # 연락처
 
 # --- 1. 데이터 구조 정의 ---
 class ContractData(BaseModel):
