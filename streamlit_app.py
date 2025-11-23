@@ -2,13 +2,14 @@ import streamlit as st
 import os
 import tempfile
 import sys
+import pandas as pd
 from typing import Any, Dict
+from datetime import datetime
 
 # Streamlit Cloud 배포 시 Secrets를 환경변수로 로드
 if hasattr(st, "secrets"):
-    for key, value in st.secrets.items():
-        if key in ["OPENAI_API_KEY", "GCP_CREDENTIALS", "SPREADSHEET_URL"]:
-            os.environ[key] = str(value)
+    if "OPENAI_API_KEY" in st.secrets:
+        os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 # 로컬 환경을 위해 .env 파일 로드
 try:
@@ -20,7 +21,7 @@ except ImportError:
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from contract_processor import extract_text_node, analyze_contract_node, AgentState
-from sheets_manager import GoogleSheetManager
+# ❌ 이 줄 삭제: from sheets_manager import GoogleSheetManager
 
 # Page configuration
 st.set_page_config(page_title="계약서 분석기", page_icon="📄")
@@ -56,7 +57,7 @@ if uploaded_file is not None:
             
             if extract_result.get("raw_text"):
                 raw_text = extract_result["raw_text"]
-                st.session_state.raw_text = raw_text  # Save to session state
+                st.session_state.raw_text = raw_text
                 st.info("텍스트 추출 완료")
                 
                 # 2. Analyze Contract
@@ -65,7 +66,7 @@ if uploaded_file is not None:
                 analyze_result = analyze_contract_node(agent_state)
                 
                 if analyze_result.get("extracted_data"):
-                    st.session_state.analyzed_data = analyze_result["extracted_data"]  # Save to session state
+                    st.session_state.analyzed_data = analyze_result["extracted_data"]
                     st.success("분석 완료!")
                 else:
                     st.error(f"분석 실패: {analyze_result.get('status')}")
@@ -82,17 +83,31 @@ if uploaded_file is not None:
             with st.expander("추출된 텍스트 보기"):
                 st.text_area("Raw Text", st.session_state.raw_text, height=200)
         
-        # Save to Sheets button (now outside the analyze button)
-        if st.button("구글 시트에 저장"):
-            try:
-                spreadsheet_url = os.environ.get("SPREADSHEET_URL", "")
-                if not spreadsheet_url:
-                    st.error("SPREADSHEET_URL이 설정되지 않았습니다.")
-                else:
-                    with st.spinner("구글 시트에 저장 중..."):
-                        manager = GoogleSheetManager(spreadsheet_url)
-                        manager.append_row(st.session_state.analyzed_data)
-                        st.success("✅ 구글 시트에 저장되었습니다!")
-            except Exception as e:
-                st.error(f"❌ 저장 실패: {e}")
-                st.exception(e)  # 상세 에러 표시
+        # CSV 다운로드 버튼
+        data = st.session_state.analyzed_data
+        
+        # DataFrame 생성
+        df = pd.DataFrame([{
+            "처리일시": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "계약명": data.get("contract_name", ""),
+            "이용자명": data.get("user_name", ""),
+            "계약기간": data.get("contract_period", ""),
+            "청구일": data.get("claim_dates", ""),
+            "지급비율": data.get("payment_ratios", ""),
+            "계약체결일": data.get("contract_sign_date", ""),
+            "상호": data.get("company_name", ""),
+            "주소": data.get("company_address", ""),
+            "사업자번호": data.get("business_registration_number", ""),
+            "대표이사": data.get("ceo_name", ""),
+            "연락처": data.get("contact", "")
+        }])
+        
+        # CSV 변환
+        csv = df.to_csv(index=False, encoding='utf-8-sig')
+        
+        st.download_button(
+            label="📥 CSV 파일로 다운로드",
+            data=csv,
+            file_name=f"contract_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv"
+        )
