@@ -11,8 +11,11 @@ if hasattr(st, "secrets"):
             os.environ[key] = str(value)
 
 # 로컬 환경을 위해 .env 파일 로드 (Streamlit Cloud에서는 무시됨/파일없음)
-from dotenv import load_dotenv
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # Add the current directory to sys.path to ensure imports work correctly
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
