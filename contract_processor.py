@@ -100,8 +100,8 @@ def analyze_contract_node(state: AgentState):
 
     try:
         result = structured_llm.invoke(messages)
-        contract_data = ContractData(**result)
-        print(f"✅ 분석 완료: 계약명={contract_data.contract_name}")
-        return {"extracted_data": contract_data.dict(), "status": "분석 성공"}
+        # ✅ result는 이미 ContractData 객체이므로 그냥 사용
+        print(f"✅ 분석 완료: 계약명={result.contract_name}")
+        return {"extracted_data": result.dict(), "status": "분석 성공"}
     except Exception as e:
         return {"status": f"❌ 계약 분석 오류: {str(e)}"}
