@@ -1,7 +1,5 @@
 import sys
 import os
-# import tkinter as tk
-# from tkinter import filedialog
 from typing import Optional
 from typing_extensions import TypedDict
 
@@ -15,11 +13,11 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel
 from langgraph.graph import StateGraph, START, END
 
-# 🔥 로컬 모듈은 "같은 폴더" 안에 있으므로 상대 경로로 import
-try:
-    from .sheets_manager import GoogleSheetManager
-except ImportError:
-    from sheets_manager import GoogleSheetManager
+# ❌ 이 부분 삭제 - 사용하지 않음
+# try:
+#     from .sheets_manager import GoogleSheetManager
+# except ImportError:
+#     from sheets_manager import GoogleSheetManager
 
 # --- 설정 상수 ---
 SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1p82-rmbcGuQ4asd15teiSsBn4J41x0rOpIDVQSrPEIU/"
